@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality, GenerateContentResponse, Part } from "@google/genai";
 import { ProductDetail }from '../types';
 
@@ -61,7 +60,7 @@ export const generatePhotoshootImage = async (
   styleImage: File | null,
   productDetails: ProductDetail[],
   additionalNotes: string
-): Promise<string> => {
+): Promise<string | null> => {
     if (!process.env.API_KEY) {
       throw new Error("API_KEY environment variable is not set.");
     }
@@ -92,11 +91,22 @@ export const generatePhotoshootImage = async (
         },
     });
 
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    // CRITICAL: Bulletproof check for valid response structure
+    if (
+        response &&
+        response.candidates &&
+        response.candidates.length > 0 &&
+        response.candidates[0].content &&
+        response.candidates[0].content.parts
+    ) {
+        const candidate = response.candidates[0];
+        for (const part of candidate.content.parts) {
+            if (part.inlineData) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
         }
     }
     
-    throw new Error("No image was generated. The model may have refused the request.");
+    // If no valid image part was found, return null
+    return null;
 };

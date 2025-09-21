@@ -8,10 +8,16 @@ import { Lightbox } from './components/Lightbox';
 import { generatePhotoshootImage } from './services/geminiService';
 
 const POSES = [
-  "full-body shot, standing, looking at camera",
-  "candid walking shot, side profile",
-  "close-up portrait, serious expression",
-  "sitting on a minimalist stool, three-quarter view"
+  "Full body, walking on a street, dynamic motion",
+  "Medium shot, upper body, against a clean wall",
+  "Sitting at an outdoor cafe, holding a coffee cup",
+  "Leaning against a textured wall, looking away from camera",
+  "Shot from behind, looking back over the shoulder",
+  "Close-up portrait shot, focused on the product's texture near the neckline",
+  "Action shot, model laughing or interacting with the environment",
+  "Full body, standing, with hands in pockets",
+  "Detailed shot focusing on the product's sleeves and cuffs",
+  "Studio portrait on a neutral grey background"
 ];
 
 const LOADING_MESSAGES = [
@@ -38,6 +44,7 @@ export default function App() {
   
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [productInputClearTrigger, setProductInputClearTrigger] = useState<number>(0);
+  const [numImagesToGenerate, setNumImagesToGenerate] = useState<number>(6);
 
   const isGenerateDisabled = !modelImage || !productFrontImage || isLoading;
 
@@ -81,8 +88,10 @@ export default function App() {
     setError(null);
     setGeneratedImages([]);
 
+    const posesToGenerate = POSES.slice(0, numImagesToGenerate);
+
     try {
-      for (const pose of POSES) {
+      for (const pose of posesToGenerate) {
         if (!modelImage || !productFrontImage) break; // Should not happen due to button state, but good practice
         
         const newImageSrc = await generatePhotoshootImage(
@@ -95,7 +104,13 @@ export default function App() {
           additionalNotes
         );
 
-        setGeneratedImages(prev => [...prev, { id: crypto.randomUUID(), src: newImageSrc }]);
+        if (newImageSrc) {
+            setGeneratedImages(prev => [...prev, { id: crypto.randomUUID(), src: newImageSrc }]);
+        } else {
+            // If newImageSrc is null, log it and proceed to the next pose.
+            console.log(`Skipping pose: ${pose}`);
+        }
+        
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
       }
     } catch (err) {
@@ -183,6 +198,25 @@ export default function App() {
           <div className="w-full lg:w-2/3 lg:sticky top-24 self-start">
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h2 className="text-xl font-semibold border-b pb-3 mb-6">4. Generation</h2>
+              
+              <div className="mb-4">
+                <label htmlFor="num-images" className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Images
+                </label>
+                <select
+                    id="num-images"
+                    name="num-images"
+                    value={numImagesToGenerate}
+                    onChange={(e) => setNumImagesToGenerate(Number(e.target.value))}
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-brand-secondary focus:border-brand-secondary sm:text-sm"
+                    disabled={isLoading}
+                >
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num}</option>
+                    ))}
+                </select>
+              </div>
+
               <button
                 onClick={handleGenerate}
                 disabled={isGenerateDisabled}
