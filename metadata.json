@@ -1,0 +1,5 @@
+{
+  "name": "AI Photoshoot Generator",
+  "description": "A tool to generate a professional-looking fashion photoshoot by combining a model's face, a clothing product, and an optional style reference using the Gemini API.",
+  "requestFramePermissions": []
+}
